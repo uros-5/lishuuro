@@ -1,11 +1,36 @@
-[workspace]
+[package]
+name = "lishuuro"
+version = "0.1.0"
+edition = "2021"
 
-members = [
-  "lishuuro"
-]
-
-[profile.release]
-strip = true
-opt-level = "s"
-lto = true
-codegen-units = 1
+[dependencies]
+axum = { version = "0.8.3", features = ["ws", "json", "macros"]}
+axum-macros = "0.5.0"
+base64 = "0.22.1"
+bson = "2.14.0"
+chrono = { version = "0.4.40", features = ["serde"]}
+ctrlc = "3.4.6"
+dotenv = "0.15.0"
+futures = "0.3.31"
+hex-literal = "1.0.0"
+hyper = "1.6.0"
+json_value_merge = "2.0.1"
+mongodb = "3.2.3"
+rand = "0.9.0"
+redis = { version = "0.29.5", features = ["aio", "connection-manager", "tokio-comp"] }
+reqwest = { version = "0.12.15", features = ["json"]}
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+sha2 = "0.10.8"
+tokio = {version = "1.44.2", features = ["full", "time"]}
+tower = "0.5.2"
+tower-http = {version = "0.6.2",  features = ["cors", "util", "fs"] }
+url = "2.5.4"
+uuid = {version = "1.16.0", features = ["v4", "serde"] }
+# shuuro = { git = "https://github.com/uros-5/shuuro", branch = "master", features = ["shuuro12", "shuuro8", "shuuro6"] }
+shuuro = { path="../shuuro", features = ["shuuro12", "shuuro8", "shuuro6"] }
+axum-htmx = "0.7.0"
+minijinja = {version = "2.5.0", features = ["loader", "builtins", "json"] }
+async-session = "3.0.0"
+axum-extra = {version = "0.10.1", features = ["typed-header"]}
+serde_repr = "0.1.20"

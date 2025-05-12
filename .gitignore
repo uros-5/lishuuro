@@ -1,4 +1,4 @@
 /target
-/Cargo.lock
-# /src/websockets/server_messages.rs
 /.vscode
+assets
+.env
