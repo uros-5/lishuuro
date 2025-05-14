@@ -16,7 +16,7 @@ use crate::database::Database;
 use crate::{database::redis::UserSession, AppState};
 
 use super::channels::game::GameMessage;
-use super::channels::game_reguests::{GameRequest, GameRequestMessage};
+use super::channels::game_requests::{GameRequest, GameRequestMessage};
 use super::channels::games::GamesMessage;
 use super::channels::message_types::MessageType;
 use super::channels::players::PlayersMessage;

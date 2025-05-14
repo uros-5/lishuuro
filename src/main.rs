@@ -11,7 +11,7 @@ use database::Database;
 use minijinja::Environment;
 use routes::{
     callback, game_axum, game_vue, games_axum, games_vue, home, how_to_play, login,
-    tv, vue_user,
+    save_state, tv, vue_user,
 };
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
@@ -40,6 +40,7 @@ async fn main() {
         .route("/vue/game/{id}", get(game_vue))
         .route("/vue/@/{username}/{page}", get(games_vue))
         .route("/ws/", get(websocket_handler))
+        .route("/shutdown", get(save_state))
         .with_state(state)
         .nest_service("/assets", ServeDir::new("./assets/assets"))
         .nest_service("/board", ServeDir::new("./assets/board"))
@@ -47,8 +48,6 @@ async fn main() {
         .nest_service("/images", ServeDir::new("./assets/images"))
         .nest_service("/pieces", ServeDir::new("./assets/pieces"))
         .layer(cors);
-
-    // tokio::join!(serve(using_serve_dir(), 3001),);
 
     // run our app with hyper, listening globally on port 3000
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
@@ -64,11 +63,13 @@ fn cors(prod: bool) -> CorsLayer {
 
 pub fn prod_url(prod: bool) -> (&'static str, &'static str) {
     if prod {
-        // return ("http://localhost:3000", "http://localhost:5173");
         return ("https://lishuuro.org", "https://lishuuro.org");
     }
 
-    let vue = env::var("VUE").unwrap().parse::<bool>().unwrap();
+    let vue = env::var("VUE")
+        .unwrap_or(String::from("true"))
+        .parse::<bool>()
+        .unwrap();
     if vue {
         return ("http://localhost:3000", "http://localhost:5173");
     }

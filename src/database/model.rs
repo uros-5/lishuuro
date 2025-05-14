@@ -1,4 +1,4 @@
-use crate::websockets::channels::game_reguests::GameRequest;
+use crate::websockets::channels::game_requests::GameRequest;
 
 use super::{clock::time_control::TimeControl, serde_helpers::*};
 use bson::DateTime;

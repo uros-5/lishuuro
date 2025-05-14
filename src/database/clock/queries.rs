@@ -105,7 +105,11 @@ pub async fn get_game_db(
 pub async fn add_game_to_db(
     db: &Collection<ShuuroGame>,
     game: ShuuroGame,
+    started: bool,
 ) -> ShuuroGame {
+    if started {
+        return game;
+    }
     if let Err(_res) = db.insert_one(&game).await {}
     game
     // live_game_start(game)
@@ -162,7 +166,10 @@ pub async fn unfinished(db: &Collection<ShuuroGame>) -> HashMap<String, ShuuroGa
         let games: Vec<ShuuroGame> =
             c.try_collect().await.unwrap_or_else(|_| vec![]);
         for g in games {
-            dbg!(&g._id);
+            if g.players.contains(&String::from("")) {
+                remove_game(db, g._id).await;
+                continue;
+            }
             hm.insert(String::from(&g._id), g);
         }
     }

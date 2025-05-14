@@ -183,6 +183,12 @@ pub async fn game_axum(
     Ok(Html(output))
 }
 
+pub async fn save_state(user: UserSession, State(state): State<AppState>) {
+    if user.username == "iiiurosiii" {
+        let _ = state.ws.games.send(GamesMessage::SaveState).await;
+    }
+}
+
 #[derive(Serialize)]
 pub struct VueGames {
     player: Option<Player>,

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use game_reguests::{game_requests_task, GameRequestMessage};
+use game_requests::{game_requests_task, GameRequestMessage};
 use games::{games_task, GamesMessage};
 use jinja::JinjaMessage;
 use players::{players_task, PlayersMessage};
@@ -12,7 +12,7 @@ use crate::database::Database;
 pub mod chat;
 pub mod clock;
 pub mod game;
-pub mod game_reguests;
+pub mod game_requests;
 pub mod games;
 pub mod jinja;
 pub mod message_types;
@@ -48,12 +48,12 @@ impl WsState {
     }
 
     pub async fn send_ws(&self, ws: Arc<WsState>) {
-        let _ = self.games.send(GamesMessage::SetWs(ws.clone())).await;
         let _ = self
             .game_requests
             .send(GameRequestMessage::SetWs(ws.clone()))
             .await;
         let _ = self.players.send(PlayersMessage::SetWs(ws.clone())).await;
+        let _ = self.games.send(GamesMessage::SetWs(ws.clone())).await;
     }
 
     pub fn empty() -> Self {

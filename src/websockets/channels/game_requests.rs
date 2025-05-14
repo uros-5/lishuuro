@@ -83,6 +83,7 @@ pub async fn game_requests_task(
                                         request,
                                         game_id(&db.mongo.games).await,
                                         caller,
+                                        None,
                                     )
                                     .await;
                                 }
@@ -98,6 +99,7 @@ pub async fn game_requests_task(
                                         request,
                                         game_id(&db.mongo.games).await,
                                         caller,
+                                        None,
                                     )
                                     .await;
                                 }
@@ -113,6 +115,7 @@ pub async fn game_requests_task(
                                         request,
                                         game_id(&db.mongo.games).await,
                                         caller,
+                                        None,
                                     )
                                     .await;
                                 }
@@ -123,7 +126,7 @@ pub async fn game_requests_task(
                         }
                     };
                 }
-                GameRequestMessage::RedirectToGame => todo!(),
+                GameRequestMessage::RedirectToGame => {}
                 GameRequestMessage::Join(player, sender) => {
                     watchers.add_watcher(player, sender);
                     let msg = GamesCount {
@@ -247,6 +250,17 @@ impl GameRequest {
             Color::White
         } else {
             Color::Black
+        }
+    }
+
+    pub fn empty() -> Self {
+        Self {
+            minutes: 1,
+            incr: 1,
+            variant: Variant::Shuuro,
+            sub_variant: None,
+            color: Color::NoColor,
+            game_type: TypeOfGame::VsFriend("".to_string()),
         }
     }
 }

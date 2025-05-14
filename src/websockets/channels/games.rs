@@ -1,18 +1,26 @@
 use std::{collections::HashMap, sync::Arc};
 
 use shuuro::{
-    attacks::Attacks, shuuro12::attacks12::Attacks12, shuuro6::attacks6::Attacks6,
-    shuuro8::attacks8::Attacks8,
+    attacks::Attacks,
+    shuuro12::{
+        attacks12::Attacks12, bitboard12::BB12, position12::P12, square12::Square12,
+    },
+    shuuro6::{attacks6::Attacks6, bitboard6::BB6, position6::P6, square6::Square6},
+    shuuro8::{attacks8::Attacks8, bitboard8::BB8, position8::P8, square8::Square8},
+    Variant,
 };
 use tokio::sync::{
     mpsc::{self, Sender},
     oneshot,
 };
 
-use crate::database::{model::ShuuroGame, Database};
+use crate::database::{clock::queries::unfinished, model::ShuuroGame, Database};
 
 use super::{
-    game::GameMessage, game_reguests::GameRequestMessage, tv::TvMessage, WsState,
+    game::{game_task, GameMessage},
+    game_requests::{GameRequest, GameRequestMessage},
+    tv::TvMessage,
+    WsState,
 };
 
 pub enum GamesMessage {
@@ -29,26 +37,35 @@ pub enum GamesMessage {
         id: String,
     },
     GetGame(oneshot::Sender<ShuuroGame>, String),
+    SaveState,
 }
 
 pub async fn games_task(
-    _: Arc<Database>,
+    db: Arc<Database>,
     _: mpsc::Sender<TvMessage>,
 ) -> mpsc::Sender<GamesMessage> {
     let (sender, mut recv) = mpsc::channel(64);
     init();
+
     let _ = tokio::spawn(async move {
         let mut ws = Arc::new(WsState::empty());
         let mut channels = HashMap::new();
+        let mut shutdown = false;
         while let Some(message) = recv.recv().await {
             //
             match message {
                 GamesMessage::InsertGame { channel, id } => {
+                    if shutdown == true {
+                        continue;
+                    }
                     channels.insert(id, channel);
                     let _ = ws.game_requests.send(GameRequestMessage::NewGame).await;
                 }
                 GamesMessage::RemoveGame { id } => {
                     channels.remove(&id);
+                    if shutdown && channels.len() == 0 {
+                        std::process::exit(1);
+                    }
                 }
                 GamesMessage::GetChannel { sender, id } => {
                     let Some(game) = channels.get(&id) else {
@@ -59,10 +76,72 @@ pub async fn games_task(
                 }
                 GamesMessage::SetWs(ws_state) => {
                     ws = ws_state;
+
+                    let games = unfinished(&db.mongo.games).await;
+                    for game in games {
+                        let variant = game.1.variant;
+                        let request = GameRequest::empty();
+                        match variant {
+                            Variant::Shuuro | Variant::ShuuroFairy => {
+                                game_task::<
+                                    Square12,
+                                    BB12<Square12>,
+                                    Attacks12<Square12, BB12<Square12>>,
+                                    P12<Square12, BB12<Square12>>,
+                                >(
+                                    db.clone(),
+                                    ws.clone(),
+                                    request,
+                                    game.1._id.to_string(),
+                                    String::new(),
+                                    Some(game.1),
+                                )
+                                .await;
+                            }
+                            Variant::ShuuroMini | Variant::ShuuroMiniFairy => {
+                                game_task::<
+                                    Square6,
+                                    BB6<Square6>,
+                                    Attacks6<Square6, BB6<Square6>>,
+                                    P6<Square6, BB6<Square6>>,
+                                >(
+                                    db.clone(),
+                                    ws.clone(),
+                                    request,
+                                    game.1._id.to_string(),
+                                    String::new(),
+                                    Some(game.1),
+                                )
+                                .await;
+                            }
+                            Variant::Standard | Variant::StandardFairy => {
+                                game_task::<
+                                    Square8,
+                                    BB8<Square8>,
+                                    Attacks8<Square8, BB8<Square8>>,
+                                    P8<Square8, BB8<Square8>>,
+                                >(
+                                    db.clone(),
+                                    ws.clone(),
+                                    request,
+                                    game.1._id.to_string(),
+                                    String::new(),
+                                    Some(game.1),
+                                )
+                                .await;
+                            }
+                        };
+                    }
                 }
                 GamesMessage::GetGame(sender, ref id) => {
                     if let Some(channel) = channels.get(id) {
                         let _ = channel.send(GameMessage::GetGame(sender)).await;
+                    }
+                }
+                GamesMessage::SaveState => {
+                    shutdown = true;
+                    for channel in &channels {
+                        let _ = channel.1.send(GameMessage::SaveState).await;
                     }
                 }
             }

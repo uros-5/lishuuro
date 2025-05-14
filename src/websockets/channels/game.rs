@@ -23,11 +23,11 @@ use crate::{
     websockets::handler::WsMessage,
 };
 
-use super::game_reguests::GameRequestMessage;
+use super::game_requests::GameRequestMessage;
 use super::tv::TvMessage;
 use super::{
     clock::{clock_task, ClockMessage},
-    game_reguests::{GameRequest, TypeOfGame},
+    game_requests::{GameRequest, TypeOfGame},
     games::GamesMessage,
     message_types::MessageType,
     players::PlayersMessage,
@@ -41,6 +41,7 @@ pub async fn game_task<S, B, A, P>(
     game_request: GameRequest,
     id: String,
     caller: String,
+    unfinished: Option<ShuuroGame>,
 ) where
     S: Square + Hash + Send + 'static,
     B: BitBoard<S>,
@@ -57,6 +58,9 @@ pub async fn game_task<S, B, A, P>(
 {
     // A::init();
     let mut other_player = {
+        if unfinished.is_some() {
+            "".to_string();
+        }
         match game_request.game_type {
             TypeOfGame::VsFriend(ref player) => player.to_string().replace(' ', ""),
             TypeOfGame::VsAi(_) => "ai".to_string(),
@@ -65,10 +69,17 @@ pub async fn game_task<S, B, A, P>(
     if other_player == "ai" {
         return;
     }
-    let colors = game_request.colors(&caller, &other_player);
+    let mut started = unfinished.is_some();
+    let colors = match unfinished {
+        Some(ref unfinished) => unfinished.players.clone(),
+        None => game_request.colors(&caller, &other_player),
+    };
     let mut watchers = Watchers::new();
-    let game = ShuuroGame::from((&game_request, &colors, id.as_str()));
-    let mut game = add_game_to_db(&db.mongo.games, game).await;
+    let game = match unfinished {
+        Some(game) => game,
+        None => ShuuroGame::from((&game_request, &colors, id.as_str())),
+    };
+    let mut game = add_game_to_db(&db.mongo.games, game, started).await;
     let (mut selection, mut placement, mut fight) =
         (Selection::<S>::default(), P::new(), P::new());
 
@@ -99,6 +110,28 @@ pub async fn game_task<S, B, A, P>(
             game.tc.update_stage(1);
         }
     }
+
+    if started {
+        let starting_position = game.placement_start.to_string();
+        let _ = placement.set_sfen(&starting_position);
+        for m in &game.history.1 {
+            let m = Move::<S>::from_sfen(m);
+            let Some(m) = m else { return };
+            let Move::Put { to, piece } = m else { return };
+            placement.place(piece, to);
+        }
+        let starting_position = game.game_start.to_string();
+        let _ = fight.set_sfen(&starting_position);
+        for m in &game.history.2 {
+            let m = Move::<S>::from_sfen(m);
+            let Some(m) = m else { return };
+            let Move::Normal { .. } = m else {
+                return;
+            };
+            let _ = fight.make_move(m);
+        }
+    }
+
     let (send, mut recv) = mpsc::channel(30);
     let _ = ws
         .games
@@ -114,7 +147,6 @@ pub async fn game_task<S, B, A, P>(
             player: caller.to_string(),
         })
         .await;
-    let mut started = false;
     let clock_task = clock_task(send.clone()).await;
     let mut current_interval = 15_000;
     tokio::spawn(async move {
@@ -333,6 +365,7 @@ pub async fn game_task<S, B, A, P>(
                                 &watchers,
                                 ws.game_requests.clone(),
                                 &game,
+                                ws.games.clone(),
                             )
                             .await;
                             let _ = ws
@@ -406,6 +439,7 @@ pub async fn game_task<S, B, A, P>(
                                 &watchers,
                                 ws.game_requests.clone(),
                                 &game,
+                                ws.games.clone(),
                             )
                             .await;
                             let _ = ws
@@ -437,6 +471,7 @@ pub async fn game_task<S, B, A, P>(
                             &watchers,
                             ws.game_requests.clone(),
                             &game,
+                            ws.games.clone(),
                         )
                         .await;
                         let _ = ws
@@ -481,6 +516,7 @@ pub async fn game_task<S, B, A, P>(
                         &watchers,
                         ws.game_requests.clone(),
                         &game,
+                        ws.games.clone(),
                     )
                     .await;
 
@@ -502,6 +538,7 @@ pub async fn game_task<S, B, A, P>(
                         &watchers,
                         ws.game_requests.clone(),
                         &game,
+                        ws.games.clone(),
                     )
                     .await;
 
@@ -542,6 +579,7 @@ pub async fn game_task<S, B, A, P>(
                                     &watchers,
                                     ws.game_requests.clone(),
                                     &game,
+                                    ws.games.clone(),
                                 )
                                 .await;
 
@@ -578,6 +616,7 @@ pub async fn game_task<S, B, A, P>(
                             &watchers,
                             ws.game_requests.clone(),
                             &game,
+                            ws.games.clone(),
                         )
                         .await;
 
@@ -603,6 +642,22 @@ pub async fn game_task<S, B, A, P>(
                         .await;
 
                     continue;
+                }
+                GameMessage::SaveState => {
+                    game.result = 2;
+                    game.status = -2;
+                    update_entire_game(&db.mongo.games, &game).await;
+                    close_game(
+                        clock_task,
+                        2,
+                        -2,
+                        &watchers,
+                        ws.game_requests.clone(),
+                        &game,
+                        ws.games.clone(),
+                    )
+                    .await;
+                    break;
                 }
             }
         }
@@ -665,6 +720,7 @@ pub enum GameMessage {
     Resign(String),
     Abort,
     CheckClock,
+    SaveState,
 }
 
 pub enum MoveType {
@@ -758,6 +814,7 @@ async fn close_game(
     watchers: &Watchers,
     requests: mpsc::Sender<GameRequestMessage>,
     game: &ShuuroGame,
+    games: mpsc::Sender<GamesMessage>,
 ) {
     let _ = clock_task.send(ClockMessage::StopClock).await;
 
@@ -774,6 +831,11 @@ async fn close_game(
         .await;
     let _ = requests
         .send(GameRequestMessage::RemovePlayers(game.players.clone()))
+        .await;
+    let _ = games
+        .send(GamesMessage::RemoveGame {
+            id: game._id.to_string(),
+        })
         .await;
 }
 
