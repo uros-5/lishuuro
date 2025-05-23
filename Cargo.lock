@@ -1439,6 +1439,7 @@ dependencies = [
  "serde_repr",
  "sha2 0.10.8",
  "shuuro",
+ "shuuro-engine",
  "tokio",
  "tower",
  "tower-http",
@@ -2410,11 +2411,21 @@ checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
 name = "shuuro"
-version = "1.1.6"
+version = "1.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f0cef2da33162484d2cb54537fc2485d7f90b2128bcab75b5b1274a765cbae9"
 dependencies = [
  "itertools",
  "rand 0.8.5",
  "thiserror 1.0.69",
+]
+
+[[package]]
+name = "shuuro-engine"
+version = "0.1.0"
+source = "git+https://github.com/uros-5/shuuro-engine?branch=rewrite#a756da2086c3f5df4a7cef8a35e6f0cba853930c"
+dependencies = [
+ "shuuro",
 ]
 
 [[package]]

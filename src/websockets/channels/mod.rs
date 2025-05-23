@@ -9,6 +9,7 @@ use tv::{tv_task, TvMessage};
 
 use crate::database::Database;
 
+pub mod ai;
 pub mod chat;
 pub mod clock;
 pub mod game;

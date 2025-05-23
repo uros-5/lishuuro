@@ -9,6 +9,11 @@ use shuuro::{
     shuuro8::{attacks8::Attacks8, bitboard8::BB8, position8::P8, square8::Square8},
     Variant,
 };
+use shuuro_engine::{
+    engine12::search::{Defs12, Engine12},
+    engine6::search::{Defs6, Engine6},
+    engine8::search::{Defs8, Engine8},
+};
 use tokio::sync::{
     mpsc::{self, Sender},
     oneshot,
@@ -88,6 +93,11 @@ pub async fn games_task(
                                     BB12<Square12>,
                                     Attacks12<Square12, BB12<Square12>>,
                                     P12<Square12, BB12<Square12>>,
+                                    Engine12,
+                                    Defs12,
+                                    12,
+                                    144,
+                                    11,
                                 >(
                                     db.clone(),
                                     ws.clone(),
@@ -104,6 +114,11 @@ pub async fn games_task(
                                     BB6<Square6>,
                                     Attacks6<Square6, BB6<Square6>>,
                                     P6<Square6, BB6<Square6>>,
+                                    Engine6,
+                                    Defs6,
+                                    6,
+                                    36,
+                                    4,
                                 >(
                                     db.clone(),
                                     ws.clone(),
@@ -120,6 +135,11 @@ pub async fn games_task(
                                     BB8<Square8>,
                                     Attacks8<Square8, BB8<Square8>>,
                                     P8<Square8, BB8<Square8>>,
+                                    Engine8,
+                                    Defs8,
+                                    8,
+                                    64,
+                                    7,
                                 >(
                                     db.clone(),
                                     ws.clone(),

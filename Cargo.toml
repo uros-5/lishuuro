@@ -27,8 +27,10 @@ tower = "0.5.2"
 tower-http = {version = "0.6.2",  features = ["cors", "util", "fs"] }
 url = "2.5.4"
 uuid = {version = "1.16.0", features = ["v4", "serde"] }
-# shuuro = { git = "https://github.com/uros-5/shuuro", branch = "master", features = ["shuuro12", "shuuro8", "shuuro6"] }
-shuuro = { path="../shuuro", features = ["shuuro12", "shuuro8", "shuuro6"] }
+# shuuro = { path="../shuuro", features = ["shuuro12", "shuuro8", "shuuro6"] }
+shuuro = { version = "1.1.8", features = ["shuuro12", "shuuro8", "shuuro6"] } 
+# shuuro-engine = { path="../shuuro-engine" }
+shuuro-engine = { git = "https://github.com/uros-5/shuuro-engine", branch = "rewrite" }
 axum-htmx = "0.7.0"
 minijinja = {version = "2.5.0", features = ["loader", "builtins", "json"] }
 async-session = "3.0.0"

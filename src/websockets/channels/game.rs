@@ -3,7 +3,7 @@ use std::{hash::Hash, sync::Arc};
 use bson::DateTime;
 use chrono::{DateTime as DateTime2, Utc};
 use chrono::{FixedOffset, TimeDelta};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use shuuro::position::Outcome;
 use shuuro::PieceType;
 use shuuro::{
@@ -12,6 +12,7 @@ use shuuro::{
     position::{Board, Placement, Play, Rules, Sfen},
     Color, Move, Selection, Square,
 };
+use shuuro_engine::{Engine, EngineDefs};
 use tokio::sync::mpsc::{self, Sender};
 
 use crate::{
@@ -23,6 +24,7 @@ use crate::{
     websockets::handler::WsMessage,
 };
 
+use super::ai::ai_channel;
 use super::game_requests::GameRequestMessage;
 use super::tv::TvMessage;
 use super::{
@@ -35,7 +37,17 @@ use super::{
     WsState,
 };
 
-pub async fn game_task<S, B, A, P>(
+pub async fn game_task<
+    S,
+    B,
+    A,
+    P,
+    E,
+    D,
+    const LEN: usize,
+    const BITBOARD_SIZE: usize,
+    const RANK: usize,
+>(
     db: Arc<Database>,
     ws: Arc<WsState>,
     game_request: GameRequest,
@@ -43,9 +55,9 @@ pub async fn game_task<S, B, A, P>(
     caller: String,
     unfinished: Option<ShuuroGame>,
 ) where
-    S: Square + Hash + Send + 'static,
-    B: BitBoard<S>,
-    A: Attacks<S, B>,
+    S: Square + Hash + Send + 'static + std::marker::Sync,
+    B: BitBoard<S> + std::marker::Send + std::marker::Sync + 'static,
+    A: Attacks<S, B> + std::marker::Send + 'static + std::marker::Sync,
     P: Sized
         + Clone
         + Board<S, B, A>
@@ -54,21 +66,26 @@ pub async fn game_task<S, B, A, P>(
         + Play<S, B, A>
         + Rules<S, B, A>
         + Send
-        + 'static,
+        + 'static
+        + std::fmt::Display
+        + std::marker::Sync,
+    D: EngineDefs<S, B, LEN> + std::marker::Send + std::marker::Sync + 'static,
+    E: Engine<S, B, A, P, D, LEN, BITBOARD_SIZE, RANK>
+        + 'static
+        + std::marker::Send
+        + std::marker::Sync,
 {
     // A::init();
+
     let mut other_player = {
         if unfinished.is_some() {
             "".to_string();
         }
         match game_request.game_type {
             TypeOfGame::VsFriend(ref player) => player.to_string().replace(' ', ""),
-            TypeOfGame::VsAi(_) => "ai".to_string(),
+            TypeOfGame::VsAi(_) => "AI".to_string(),
         }
     };
-    if other_player == "ai" {
-        return;
-    }
     let mut started = unfinished.is_some();
     let colors = match unfinished {
         Some(ref unfinished) => unfinished.players.clone(),
@@ -147,6 +164,29 @@ pub async fn game_task<S, B, A, P>(
             player: caller.to_string(),
         })
         .await;
+
+    if other_player == "AI" {
+        let Some(index) = player_index(&game.players, &"AI".to_string()) else {
+            return;
+        };
+        let mut position = fight.clone();
+
+        if game.current_stage == 1 {
+            position = placement.clone();
+        }
+
+        ai_channel::<S, B, A, P, E, D, BITBOARD_SIZE, LEN, RANK>(
+            send.clone(),
+            game_request.game_type.depth() as i32,
+            Color::from(index),
+            position,
+            selection.clone(),
+            game.current_stage,
+            db.pockets.clone(),
+        )
+        .await;
+    }
+
     let clock_task = clock_task(send.clone()).await;
     let mut current_interval = 15_000;
     tokio::spawn(async move {
@@ -409,7 +449,7 @@ pub async fn game_task<S, B, A, P>(
 
                         let side_to_move = fight.side_to_move().flip() as u8;
                         game.side_to_move = side_to_move;
-                        game.sfen = fight.get_sfen_history().first();
+                        game.sfen = fight.get_sfen_history().first().2;
                         game.history.2.push(game_move.to_string());
                         let message = MovePiece {
                             clocks,
@@ -729,61 +769,61 @@ pub enum MoveType {
     MovePiece,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct GameEnd {
     t: MessageType,
     result: u8,
-    status: i32,
+    pub status: i32,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct PlayerSelection {
     t: MessageType,
     hand: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct GameDraw {
     t: MessageType,
     draw_offer: bool,
     end: i8,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ConfirmSelection {
     t: MessageType,
     confirmed: [bool; 2],
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct RedirectToPlacement {
     t: MessageType,
     pub id: String,
     last_clock: DateTime2<FixedOffset>,
     players: [String; 2],
     pub sfen: String,
-    variant: u8,
+    pub variant: u8,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct PlacePiece {
     t: MessageType,
     clocks: [u64; 2],
-    first_move_error: bool,
-    next_stage: bool,
-    sfen: String,
+    pub first_move_error: bool,
+    pub next_stage: bool,
+    pub sfen: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct MovePiece {
     t: MessageType,
     clocks: [u64; 2],
     status: i32,
     result: u8,
-    game_move: String,
+    pub game_move: String,
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Debug, Clone, Deserialize)]
 pub struct StartClock {
     t: MessageType,
     players: [String; 2],

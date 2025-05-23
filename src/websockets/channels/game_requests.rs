@@ -10,6 +10,11 @@ use shuuro::{
     Color,
 };
 use shuuro::{SubVariant, Variant};
+use shuuro_engine::{
+    engine12::search::{Defs12, Engine12},
+    engine6::search::{Defs6, Engine6},
+    engine8::search::{Defs8, Engine8},
+};
 use std::{collections::HashSet, sync::Arc};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
@@ -52,6 +57,7 @@ pub async fn game_requests_task(
         let mut playing = HashSet::new();
         let mut ws = Arc::new(WsState::empty());
         let mut games_count = 0;
+        let mut ai_games_count = 0;
         while let Some(message) = recv.recv().await {
             match message {
                 GameRequestMessage::AddGameRequest { caller, request } => {
@@ -61,68 +67,84 @@ pub async fn game_requests_task(
                     if playing.len() >= 60 {
                         continue;
                     }
-                    match &request.game_type {
-                        TypeOfGame::VsFriend(ref friend) => {
-                            if friend == &caller {
-                                continue;
-                            } else if playing.contains(friend) {
-                                continue;
-                            }
+                    let friend = request.game_type.player_name();
 
-                            playing.insert(caller.to_string());
-                            match request.variant {
-                                Variant::Shuuro | Variant::ShuuroFairy => {
-                                    game_task::<
-                                        Square12,
-                                        BB12<Square12>,
-                                        Attacks12<Square12, BB12<Square12>>,
-                                        P12<Square12, BB12<Square12>>,
-                                    >(
-                                        db.clone(),
-                                        ws.clone(),
-                                        request,
-                                        game_id(&db.mongo.games).await,
-                                        caller,
-                                        None,
-                                    )
-                                    .await;
-                                }
-                                Variant::ShuuroMini | Variant::ShuuroMiniFairy => {
-                                    game_task::<
-                                        Square6,
-                                        BB6<Square6>,
-                                        Attacks6<Square6, BB6<Square6>>,
-                                        P6<Square6, BB6<Square6>>,
-                                    >(
-                                        db.clone(),
-                                        ws.clone(),
-                                        request,
-                                        game_id(&db.mongo.games).await,
-                                        caller,
-                                        None,
-                                    )
-                                    .await;
-                                }
-                                Variant::Standard | Variant::StandardFairy => {
-                                    game_task::<
-                                        Square8,
-                                        BB8<Square8>,
-                                        Attacks8<Square8, BB8<Square8>>,
-                                        P8<Square8, BB8<Square8>>,
-                                    >(
-                                        db.clone(),
-                                        ws.clone(),
-                                        request,
-                                        game_id(&db.mongo.games).await,
-                                        caller,
-                                        None,
-                                    )
-                                    .await;
-                                }
-                            };
-                        }
-                        TypeOfGame::VsAi(_level) => {
+                    if &friend == &caller {
+                        continue;
+                    } else if playing.contains(&friend) {
+                        continue;
+                    }
+                    if &friend == "AI" {
+                        if ai_games_count == 10 {
                             continue;
+                        }
+                        ai_games_count += 1;
+                    }
+
+                    playing.insert(caller.to_string());
+                    match request.variant {
+                        Variant::Shuuro | Variant::ShuuroFairy => {
+                            game_task::<
+                                Square12,
+                                BB12<Square12>,
+                                Attacks12<Square12, BB12<Square12>>,
+                                P12<Square12, BB12<Square12>>,
+                                Engine12,
+                                Defs12,
+                                12,
+                                144,
+                                11,
+                            >(
+                                db.clone(),
+                                ws.clone(),
+                                request,
+                                game_id(&db.mongo.games).await,
+                                caller,
+                                None,
+                            )
+                            .await;
+                        }
+                        Variant::ShuuroMini | Variant::ShuuroMiniFairy => {
+                            game_task::<
+                                Square6,
+                                BB6<Square6>,
+                                Attacks6<Square6, BB6<Square6>>,
+                                P6<Square6, BB6<Square6>>,
+                                Engine6,
+                                Defs6,
+                                6,
+                                36,
+                                4,
+                            >(
+                                db.clone(),
+                                ws.clone(),
+                                request,
+                                game_id(&db.mongo.games).await,
+                                caller,
+                                None,
+                            )
+                            .await;
+                        }
+                        Variant::Standard | Variant::StandardFairy => {
+                            game_task::<
+                                Square8,
+                                BB8<Square8>,
+                                Attacks8<Square8, BB8<Square8>>,
+                                P8<Square8, BB8<Square8>>,
+                                Engine8,
+                                Defs8,
+                                8,
+                                64,
+                                7,
+                            >(
+                                db.clone(),
+                                ws.clone(),
+                                request,
+                                game_id(&db.mongo.games).await,
+                                caller,
+                                None,
+                            )
+                            .await;
                         }
                     };
                 }
@@ -176,7 +198,9 @@ pub async fn game_requests_task(
                         .await;
                 }
                 GameRequestMessage::AddActivePlayer(player) => {
-                    playing.insert(player);
+                    if &player != "AI" {
+                        playing.insert(player);
+                    }
                 }
             }
         }
@@ -190,6 +214,22 @@ pub async fn game_requests_task(
 pub enum TypeOfGame {
     VsFriend(String),
     VsAi(u8),
+}
+
+impl TypeOfGame {
+    fn player_name(&self) -> String {
+        match self {
+            TypeOfGame::VsFriend(name) => name.to_string(),
+            TypeOfGame::VsAi(_) => "AI".to_string(),
+        }
+    }
+
+    pub fn depth(&self) -> u8 {
+        match self {
+            TypeOfGame::VsFriend(_) => 0,
+            TypeOfGame::VsAi(depth) => *depth,
+        }
+    }
 }
 
 #[derive(Clone)]

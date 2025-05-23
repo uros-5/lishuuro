@@ -1,9 +1,9 @@
-use std::env;
+use std::{env, sync::Arc};
 
 use model::Mongo;
 use redis::RedisCli;
 
-use crate::lichess::MyKey;
+use crate::{lichess::MyKey, websockets::channels::ai::Pockets};
 
 pub mod clock;
 pub mod model;
@@ -16,6 +16,7 @@ pub struct Database {
     pub mongo: Mongo,
     pub key: MyKey,
     pub mod1: String,
+    pub pockets: Arc<Pockets>,
 }
 
 impl Database {
@@ -25,11 +26,13 @@ impl Database {
         let mongo = Mongo::new().await;
         let key = MyKey::default();
         let mod1 = env::var("LOGIN_STATE").unwrap();
+        let pockets = Arc::new(Pockets::new());
         Self {
             redis,
             mongo,
             key,
             mod1,
+            pockets,
         }
     }
 }
