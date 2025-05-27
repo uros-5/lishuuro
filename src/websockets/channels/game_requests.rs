@@ -170,6 +170,9 @@ pub async fn game_requests_task(
                 GameRequestMessage::RemovePlayers(players) => {
                     for i in players {
                         playing.remove(&i);
+                        if i == "AI" {
+                            ai_games_count -= 1;
+                        }
                     }
                     games_count -= 1;
                     let msg = GamesCount {
