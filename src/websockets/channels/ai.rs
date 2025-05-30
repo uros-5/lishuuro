@@ -105,6 +105,7 @@ pub async fn ai_channel<
         } else if current_stage == 1 {
             ai.place_piece(None).await;
         } else if current_stage == 2 {
+            ai.last_move = " ".to_string();
             ai.move_piece("").await;
         }
         while let Some(WsMessage::Message(message)) = player_recv.recv().await {

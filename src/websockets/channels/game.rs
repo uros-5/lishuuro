@@ -78,12 +78,19 @@ pub async fn game_task<
     // A::init();
 
     let mut other_player = {
-        if unfinished.is_some() {
-            "".to_string();
-        }
-        match game_request.game_type {
-            TypeOfGame::VsFriend(ref player) => player.to_string().replace(' ', ""),
-            TypeOfGame::VsAi(_) => "AI".to_string(),
+        if let Some(ref game) = unfinished {
+            if game.players.contains(&"AI".to_string()) {
+                "AI".to_string()
+            } else {
+                "".to_string()
+            }
+        } else {
+            match game_request.game_type {
+                TypeOfGame::VsFriend(ref player) => {
+                    player.to_string().replace(' ', "")
+                }
+                TypeOfGame::VsAi(_) => "AI".to_string(),
+            }
         }
     };
     let mut started = unfinished.is_some();
@@ -447,8 +454,7 @@ pub async fn game_task<
                         };
                         update_status(&mut game, outcome);
 
-                        let side_to_move = fight.side_to_move().flip() as u8;
-                        game.side_to_move = side_to_move;
+                        game.side_to_move = fight.side_to_move() as u8;
                         game.sfen = fight.get_sfen_history().first().2;
                         game.history.2.push(game_move.to_string());
                         let message = MovePiece {
@@ -474,7 +480,7 @@ pub async fn game_task<
                             update_entire_game(&db.mongo.games, &game).await;
                             close_game(
                                 clock_task,
-                                game.side_to_move as u8,
+                                game.result,
                                 game.status,
                                 &watchers,
                                 ws.game_requests.clone(),
