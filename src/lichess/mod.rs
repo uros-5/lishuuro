@@ -54,7 +54,6 @@ pub struct LoginData {
     pub username: String,
 }
 
-
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct MyKey {
     pub prod: bool,
@@ -80,7 +79,7 @@ impl Default for MyKey {
 /// My server url.
 pub fn curr_url(prod: bool) -> (&'static str, &'static str) {
     if prod {
-        ("https://lishuuro.org/w", "https://lishuuro.org")
+        ("https://lishuuro.org", "https://lishuuro.org")
     } else {
         ("http://localhost:3000", "http://localhost:3000")
     }

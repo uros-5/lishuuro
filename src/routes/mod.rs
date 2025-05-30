@@ -91,6 +91,17 @@ pub async fn callback(
     Ok(Redirect::permanent(r.as_str()))
 }
 
+pub async fn logged(
+    Path(username): Path<String>,
+    State(state): State<AppState>,
+) -> Result<Html<String>, StatusCode> {
+    let template = state.jinja.get_template("index.j2").unwrap();
+    let description = "Lichess account verified";
+    let title = format!("Player {} verified - lishuuro.org", &username);
+    let ctx = context!( description => description, title => title, props => "{}");
+    let output = template.render(ctx).unwrap();
+    Ok(Html(output))
+}
 pub async fn vue_user(user: UserSession) -> (HeaderMap, Json<VueUser>) {
     let headers = user.headers();
     (headers, Json(VueUser::from(&user)))

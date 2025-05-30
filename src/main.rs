@@ -10,8 +10,8 @@ use axum::{http::HeaderValue, routing::get, Router};
 use database::Database;
 use minijinja::Environment;
 use routes::{
-    callback, game_axum, game_vue, games_axum, games_vue, home, how_to_play, login,
-    save_state, tv, vue_user,
+    callback, game_axum, game_vue, games_axum, games_vue, home, how_to_play, logged,
+    login, save_state, tv, vue_user,
 };
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
@@ -36,6 +36,7 @@ async fn main() {
         .route("/tv", get(tv))
         .route("/@/{username}", get(games_axum))
         .route("/callback", get(callback))
+        .route("/logged", get(logged))
         .route("/vue_user", get(vue_user))
         .route("/vue/game/{id}", get(game_vue))
         .route("/vue/@/{username}/{page}", get(games_vue))
