@@ -1,4 +1,5 @@
 use std::{collections::HashMap, ops::Deref, sync::Arc};
+use typeshare::typeshare;
 
 use serde::Serialize;
 use tokio::sync::mpsc::{self, Sender};
@@ -66,7 +67,7 @@ pub async fn tv_task() -> mpsc::Sender<TvMessage> {
                 } => {
                     if let Some(game) = tv.get_mut(id) {
                         game.sfen = sfen.to_string();
-                        let message = NewMove {
+                        let message = NewTvMove {
                             t: MessageType::NewTvMove,
                             game: id.to_string(),
                             game_move: sfen,
@@ -125,25 +126,29 @@ pub async fn tv_task() -> mpsc::Sender<TvMessage> {
 }
 
 #[derive(Serialize)]
+#[typeshare]
 struct NewTvGame {
     t: MessageType,
     game: RedirectToPlacement,
 }
 
 #[derive(Serialize)]
+#[typeshare]
 struct RemoveTvGame {
     t: MessageType,
     game: String,
 }
 
 #[derive(Serialize)]
-struct NewMove {
+#[typeshare]
+struct NewTvMove {
     t: MessageType,
     game: String,
     game_move: String,
 }
 
 #[derive(Serialize)]
+#[typeshare]
 struct AllGames<'a> {
     t: MessageType,
     games: Vec<&'a RedirectToPlacement>,

@@ -1,4 +1,5 @@
 use std::{collections::HashSet, sync::Arc};
+use typeshare::typeshare;
 
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::{self, Sender};
@@ -99,11 +100,14 @@ pub async fn players_task() -> Sender<PlayersMessage> {
 }
 
 #[derive(Serialize, Deserialize)]
+#[typeshare]
 pub struct PlayersCount {
+    #[typeshare(serialized_as = "u8")]
     count: u64,
     t: MessageType,
 }
 
+#[typeshare]
 #[derive(Serialize, Deserialize)]
 pub struct RedirectPlayer {
     t: MessageType,

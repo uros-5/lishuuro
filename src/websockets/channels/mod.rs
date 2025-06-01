@@ -17,7 +17,6 @@ pub mod game_requests;
 pub mod games;
 pub mod jinja;
 pub mod message_types;
-pub mod player;
 pub mod players;
 pub mod tv;
 pub mod watchers;

@@ -1,4 +1,5 @@
 use crate::websockets::channels::game_requests::GameRequest;
+use typeshare::typeshare;
 
 use super::{clock::time_control::TimeControl, serde_helpers::*};
 use bson::DateTime;
@@ -33,46 +34,55 @@ impl Mongo {
 pub type History = (Vec<String>, Vec<String>, Vec<String>);
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[typeshare]
 /// Representing one player
 pub struct Player {
     pub _id: String,
     pub reg: bool,
+    #[typeshare(serialized_as = "String")]
     pub created_at: DateTime,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[typeshare]
 pub struct ShuuroGame {
     pub _id: String,
     #[serde(serialize_with = "duration_to_u64")]
     #[serde(deserialize_with = "str_to_duration")]
+    #[typeshare(serialized_as = "u8")]
     pub min: Duration,
     #[serde(serialize_with = "duration_to_u64")]
     #[serde(deserialize_with = "str_to_duration")]
+    #[typeshare(serialized_as = "u8")]
     pub incr: Duration,
     pub players: [String; 2],
     pub side_to_move: u8,
     #[serde(serialize_with = "duration_to_array")]
     #[serde(deserialize_with = "array_to_duration")]
+    #[typeshare(serialized_as = "[u8; 2]")]
     pub clocks: [Duration; 2],
+    #[typeshare(serialized_as = "String")]
     pub last_clock: DateTime,
     pub current_stage: u8,
     pub result: u8,
     pub status: i32,
     #[serde(serialize_with = "serialize_variant")]
     #[serde(deserialize_with = "deserialize_variant")]
+    #[typeshare(serialized_as = "u8")]
     pub variant: Variant,
     pub credits: [u16; 2],
     pub hands: [String; 2],
     pub sfen: String,
+    #[typeshare(serialized_as = "[Vec<String>; 3]")]
     pub history: History,
     pub game_start: String,
     pub placement_start: String,
     pub tc: TimeControl,
-    #[serde(skip_serializing)]
-    #[serde(skip_deserializing)]
+    #[serde(skip)]
     pub draws: [bool; 2],
     #[serde(serialize_with = "serialize_subvariant")]
     #[serde(deserialize_with = "deserialize_subvariant")]
+    #[typeshare(serialized_as = "Option<u8>")]
     pub sub_variant: Option<SubVariant>,
 }
 

@@ -1,7 +1,9 @@
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use typeshare::typeshare;
 
 #[derive(Serialize_repr, Deserialize_repr, Clone, Copy, Debug)]
 #[repr(u8)]
+#[typeshare]
 pub enum MessageType {
     ChangeRoom,
     AddGameRequest,
@@ -28,6 +30,7 @@ pub enum MessageType {
     SaveState,
     ReloadJinja,
     ConfirmSelection,
+    NewPlayer,
 }
 
 impl MessageType {

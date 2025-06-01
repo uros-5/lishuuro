@@ -1,20 +1,22 @@
 use chrono::{DateTime, Duration, FixedOffset, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 use shuuro::Color;
+use typeshare::typeshare;
 
 use crate::database::serde_helpers::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[typeshare]
 pub struct TimeControl {
+    #[typeshare(serialized_as = "String")]
     pub last_click: DateTime<FixedOffset>,
     #[serde(serialize_with = "duration_to_array")]
     #[serde(deserialize_with = "array_to_duration")]
+    #[typeshare(serialized_as = "[u8; 2]")]
     pub clocks: [Duration; 2],
-    #[serde(skip_serializing)]
-    #[serde(skip_deserializing)]
+    #[serde(skip)]
     pub stage: u8,
-    #[serde(skip_serializing)]
-    #[serde(skip_deserializing)]
+    #[serde(skip)]
     pub incr: i64,
 }
 

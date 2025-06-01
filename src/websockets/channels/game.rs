@@ -14,6 +14,7 @@ use shuuro::{
 };
 use shuuro_engine::{Engine, EngineDefs};
 use tokio::sync::mpsc::{self, Sender};
+use typeshare::typeshare;
 
 use crate::{
     database::{
@@ -775,6 +776,7 @@ pub enum MoveType {
     MovePiece,
 }
 
+#[typeshare]
 #[derive(Serialize, Deserialize)]
 pub struct GameEnd {
     t: MessageType,
@@ -782,12 +784,14 @@ pub struct GameEnd {
     pub status: i32,
 }
 
+#[typeshare]
 #[derive(Serialize, Deserialize)]
 pub struct PlayerSelection {
     t: MessageType,
     hand: String,
 }
 
+#[typeshare]
 #[derive(Serialize, Deserialize)]
 pub struct GameDraw {
     t: MessageType,
@@ -795,44 +799,53 @@ pub struct GameDraw {
     end: i8,
 }
 
+#[typeshare]
 #[derive(Serialize, Deserialize)]
 pub struct ConfirmSelection {
     t: MessageType,
     confirmed: [bool; 2],
 }
 
+#[typeshare]
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RedirectToPlacement {
     t: MessageType,
     pub id: String,
+    #[typeshare(serialized_as = "String")]
     last_clock: DateTime2<FixedOffset>,
     players: [String; 2],
     pub sfen: String,
     pub variant: u8,
 }
 
+#[typeshare]
 #[derive(Serialize, Deserialize)]
 pub struct PlacePiece {
     t: MessageType,
+    #[typeshare(serialized_as = "[u8; 2]")]
     clocks: [u64; 2],
     pub first_move_error: bool,
     pub next_stage: bool,
     pub sfen: String,
 }
 
+#[typeshare]
 #[derive(Serialize, Deserialize)]
 pub struct MovePiece {
     t: MessageType,
+    #[typeshare(serialized_as = "[u8; 2]")]
     clocks: [u64; 2],
     status: i32,
     result: u8,
     pub game_move: String,
 }
 
+#[typeshare]
 #[derive(Serialize, Debug, Clone, Deserialize)]
 pub struct StartClock {
     t: MessageType,
     players: [String; 2],
+    #[typeshare(serialized_as = "String")]
     click: DateTime2<FixedOffset>,
 }
 

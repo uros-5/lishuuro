@@ -36,3 +36,6 @@ minijinja = {version = "2.5.0", features = ["loader", "builtins", "json"] }
 async-session = "3.0.0"
 axum-extra = {version = "0.10.1", features = ["typed-header"]}
 serde_repr = "0.1.20"
+specta = { version = "1.0.5", features = ["export"] }
+specta-typescript = "0.0.9"
+typeshare = "1.0.4"

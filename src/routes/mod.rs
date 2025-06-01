@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use typeshare::typeshare;
 
 use axum::{
     extract::{Path, Query, State},
@@ -122,17 +123,21 @@ pub async fn games_axum(
 pub async fn games_vue(
     Path((username, page)): Path<(String, u64)>,
     State(state): State<AppState>,
-) -> Json<VueGames> {
+) -> Json<UserProfileGames> {
     Json(get_games(username, page, state).await)
 }
 
-pub async fn get_games(username: String, page: u64, state: AppState) -> VueGames {
+pub async fn get_games(
+    username: String,
+    page: u64,
+    state: AppState,
+) -> UserProfileGames {
     let mut player = None;
     if page < 2 {
         player = get_player(&state.db.mongo.players, &username).await;
     }
     let games = get_player_games(&state.db.mongo.games, &username, page).await;
-    VueGames { player, games }
+    UserProfileGames { player, games }
 }
 
 async fn get_game(game: String, state: AppState) -> Option<ShuuroGame> {
@@ -201,7 +206,8 @@ pub async fn save_state(user: UserSession, State(state): State<AppState>) {
 }
 
 #[derive(Serialize)]
-pub struct VueGames {
+#[typeshare]
+pub struct UserProfileGames {
     player: Option<Player>,
     games: Option<Vec<ShuuroGame>>,
 }

@@ -18,6 +18,7 @@ use shuuro_engine::{
 use std::{collections::HashSet, sync::Arc};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
+use typeshare::typeshare;
 
 use crate::{
     database::{
@@ -212,8 +213,8 @@ pub async fn game_requests_task(
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Debug)]
-#[serde(rename_all(serialize = "snake_case"))]
-#[serde(rename_all(deserialize = "snake_case"))]
+#[serde(tag = "type", content = "content")]
+#[typeshare]
 pub enum TypeOfGame {
     VsFriend(String),
     VsAi(u8),
@@ -251,16 +252,22 @@ pub enum GameRequestMessage {
 }
 
 #[derive(Clone, Deserialize, PartialEq, Eq, Debug)]
+#[typeshare]
 pub struct GameRequest {
+    #[typeshare(serialized_as = "u8")]
     pub minutes: i64,
+    #[typeshare(serialized_as = "u8")]
     pub incr: i64,
     #[serde(serialize_with = "serialize_variant")]
     #[serde(deserialize_with = "deserialize_variant")]
+    #[typeshare(serialized_as = "u8")]
     pub variant: Variant,
     #[serde(serialize_with = "serialize_subvariant")]
     #[serde(deserialize_with = "deserialize_subvariant")]
+    #[typeshare(serialized_as = "Option<u8>")]
     pub sub_variant: Option<SubVariant>,
     #[serde(deserialize_with = "deserialize_color")]
+    #[typeshare(serialized_as = "u8")]
     color: Color,
     pub game_type: TypeOfGame,
 }
@@ -309,7 +316,9 @@ impl GameRequest {
 }
 
 #[derive(Serialize, Deserialize)]
+#[typeshare]
 pub struct GamesCount {
     t: MessageType,
+    #[typeshare(serialized_as = "u8")]
     count: u64,
 }
