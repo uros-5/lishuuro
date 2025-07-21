@@ -1,7 +1,7 @@
 [package]
 name = "lishuuro"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 axum = { version = "0.8.3", features = ["ws", "json", "macros"]}
@@ -30,7 +30,7 @@ uuid = {version = "1.16.0", features = ["v4", "serde"] }
 # shuuro = { path="../shuuro", features = ["shuuro12", "shuuro8", "shuuro6"] }
 shuuro = { version = "1.1.8", features = ["shuuro12", "shuuro8", "shuuro6"] } 
 # shuuro-engine = { path="../shuuro-engine" }
-shuuro-engine = { git = "https://github.com/uros-5/shuuro-engine", branch = "rewrite" }
+shuuro-engine = { git = "https://github.com/uros-5/shuuro-engine", branch = "main" }
 axum-htmx = "0.7.0"
 minijinja = {version = "2.5.0", features = ["loader", "builtins", "json"] }
 async-session = "3.0.0"

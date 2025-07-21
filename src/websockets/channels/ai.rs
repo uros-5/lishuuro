@@ -1,11 +1,11 @@
 use rand::{rng, seq::IndexedRandom};
 use shuuro::{
+    Color, Move, Piece, PieceType, Selection, Square, Variant,
     attacks::Attacks,
     bitboard::BitBoard,
     position::{Board, Outcome, Placement, Play, Rules, Sfen},
-    Color, Move, Piece, PieceType, Selection, Square, Variant,
 };
-use shuuro_engine::{Engine, EngineDefs};
+use shuuro_engine::{Engine, engine::EngineDefs};
 use std::{env, f32::INFINITY, hash::Hash, marker::PhantomData, sync::Arc};
 use tokio::{
     sync::mpsc::{self, Sender},
@@ -186,16 +186,16 @@ pub struct AiChannel<
 }
 
 impl<
-        S,
-        B,
-        A,
-        E,
-        P,
-        D,
-        const BITBOARD_SIZE: usize,
-        const LEN: usize,
-        const RANK: usize,
-    > AiChannel<S, B, A, P, E, D, BITBOARD_SIZE, LEN, RANK>
+    S,
+    B,
+    A,
+    E,
+    P,
+    D,
+    const BITBOARD_SIZE: usize,
+    const LEN: usize,
+    const RANK: usize,
+> AiChannel<S, B, A, P, E, D, BITBOARD_SIZE, LEN, RANK>
 where
     S: Square + Hash + Send + 'static,
     B: BitBoard<S> + std::marker::Send + 'static + std::marker::Sync,
@@ -300,15 +300,14 @@ where
         }
         match mv {
             Ok(_) => {
-                let mv = self.engine.alpha_beta_search(
+                let _ = self.engine.alpha_beta_search(
                     &self.position,
                     self.depth,
                     -INFINITY as i32,
                     INFINITY as i32,
-                    self.position.side_to_move() == Color::White,
-                    true,
+                    self.position.side_to_move(),
                 );
-                if let Some(mv) = mv.best_move(&self.position) {
+                if let Some(mv) = self.engine.get_best_move() {
                     let outcome = self.position.play(&mv.to_fen());
                     if let Ok(_) = outcome {
                         let _ = self
@@ -341,7 +340,7 @@ where
 
             let random_move: Vec<_> = moves.iter().collect();
 
-            let Some((&key, value)) = random_move.choose(&mut rng()) else {
+            let Some(&(&key, ref value)) = random_move.choose(&mut rng()) else {
                 let _ = self
                     .game_channel
                     .clone()
@@ -388,7 +387,7 @@ where
 
             let random_move: Vec<_> = moves.iter().collect();
 
-            let Some((&key, value)) = random_move.choose(&mut rng()) else {
+            let Some(&(&key, ref value)) = random_move.choose(&mut rng()) else {
                 break;
             };
 

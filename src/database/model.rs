@@ -39,7 +39,7 @@ pub type History = (Vec<String>, Vec<String>, Vec<String>);
 pub struct Player {
     pub _id: String,
     pub reg: bool,
-    #[typeshare(serialized_as = "String")]
+    #[typeshare(serialized_as = "Value")]
     pub created_at: DateTime,
 }
 

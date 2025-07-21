@@ -4,23 +4,24 @@ use bson::DateTime;
 use chrono::{DateTime as DateTime2, Utc};
 use chrono::{FixedOffset, TimeDelta};
 use serde::{Deserialize, Serialize};
-use shuuro::position::Outcome;
 use shuuro::PieceType;
+use shuuro::position::Outcome;
 use shuuro::{
+    Color, Move, Selection, Square,
     attacks::Attacks,
     bitboard::BitBoard,
     position::{Board, Placement, Play, Rules, Sfen},
-    Color, Move, Selection, Square,
 };
-use shuuro_engine::{Engine, EngineDefs};
+use shuuro_engine::Engine;
+use shuuro_engine::engine::EngineDefs;
 use tokio::sync::mpsc::{self, Sender};
 use typeshare::typeshare;
 
 use crate::{
     database::{
+        Database,
         clock::queries::{add_game_to_db, remove_game, update_entire_game},
         model::ShuuroGame,
-        Database,
     },
     websockets::handler::WsMessage,
 };
@@ -29,13 +30,13 @@ use super::ai::ai_channel;
 use super::game_requests::GameRequestMessage;
 use super::tv::TvMessage;
 use super::{
-    clock::{clock_task, ClockMessage},
+    WsState,
+    clock::{ClockMessage, clock_task},
     game_requests::{GameRequest, TypeOfGame},
     games::GamesMessage,
     message_types::MessageType,
     players::PlayersMessage,
     watchers::{SendTo, Watchers},
-    WsState,
 };
 
 pub async fn game_task<
@@ -213,13 +214,7 @@ pub async fn game_task<
                                 .iter()
                                 .position(|item| item == &caller)
                                 .unwrap();
-                            let index = {
-                                if index == 0 {
-                                    1
-                                } else {
-                                    0
-                                }
-                            };
+                            let index = { if index == 0 { 1 } else { 0 } };
                             game.players[index] = other_player.to_string();
 
                             game.tc.update_stage(game.current_stage);
@@ -539,9 +534,10 @@ pub async fn game_task<
                         .notify(
                             WsMessage::Message(draw),
                             SendTo::Players {
-                                list: vec![game.players
-                                    [Color::from(index).flip() as usize]
-                                    .to_string()],
+                                list: vec![
+                                    game.players[Color::from(index).flip() as usize]
+                                        .to_string(),
+                                ],
                                 to_others: false,
                             },
                         )

@@ -1,4 +1,4 @@
 /target
 /.vscode
-assets
+./assets
 .env

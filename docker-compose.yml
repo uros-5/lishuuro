@@ -1,0 +1,27 @@
+services:
+  # rust:
+  #   build: .
+  #   command: bash -c "cargo run"
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - mongo
+  #     - redis
+
+  mongo:
+    image: mongo
+    ports:
+      - "27018:27018"
+    volumes:
+      - mongo-data:/data/db
+
+  redis:
+    image: redis
+    ports:
+      - "6380:6380"
+    volumes:
+      - redis:/data/db
+
+volumes:
+  mongo-data:
+  redis:

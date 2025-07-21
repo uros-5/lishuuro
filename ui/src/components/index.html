@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="">
+  <head>
+    <title>{{ title | escape }}</title>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/images/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="keywords"
+      content="lishuuro, shuuro chess, play shuuro, how to play shuuro, lichess, lichess fork"
+    />
+    <meta name="description" content="{{ description | escape }}" />
+    <meta property="og:description" content="{{ description | escape }}" />
+    <meta property="og:image" content="/images/lishuuro-tile.png" />
+    <meta property="og:title" content="{{ title | escape }}" />
+    <meta property="og:type" content="og:product" />
+    <meta property="og:url" content="https://lishuuro.org" />
+    <script>
+      window.gameProps = {{props | tojson}};
+    </script>
+  </head>
+
+  <body
+    class="bg-linear-to-b from-5% from-main-200 to-main-100 dark:from-main-800 dark:to-main-950 bg-fixed bg-no-repeat"
+  >
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

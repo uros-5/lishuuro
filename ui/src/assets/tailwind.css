@@ -1,0 +1,238 @@
+@import 'tailwindcss';
+
+@font-face {
+  font-family: 'Ubuntu Regular';
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url('/fonts/Ubuntu/Ubuntu-Regular.ttf');
+}
+
+@font-face {
+  font-family: 'Ubuntu Regular Bold';
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url('/fonts/Ubuntu/Ubuntu-Bold.ttf');
+}
+
+@font-face {
+  font-family: 'Josefin Sans';
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url('/fonts/Josefin_Sans/static/JosefinSans-Medium.ttf');
+}
+
+@font-face {
+  font-family: 'TitilliumWebBold';
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url('/fonts/Titillium/TitilliumWeb-Bold.ttf');
+}
+
+@font-face {
+  font-family: 'TitilliumWeb';
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url('/fonts/Titillium/TitilliumWeb-Light.ttf');
+}
+
+@font-face {
+  font-family: 'lichess';
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url('/fonts/lichess.woff2');
+}
+
+@font-face {
+  font-display: block;
+  font-family: 'lishuuro';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/lishuuro.eot?xhveaq');
+  src:
+    url('/fonts/lishuuro.eot?xhveaq#iefix') format('embedded-opentype'),
+    url('/fonts/lishuuro.ttf?xhveaq') format('truetype'),
+    url('/fonts/lishuuro.woff?xhveaq') format('woff'),
+    url('/fonts/lishuuro.svg?xhveaq#lishuuro') format('svg');
+}
+
+@theme {
+  --font-sec: 'Ubuntu Regular';
+  --font-main: 'TitilliumWeb';
+  --font-lichess: 'lichess';
+  --font-sec-bold: 'Ubuntu Regular Bold';
+  --font-main-bold: 'TitilliumWebBold';
+  --font-lishuuro: 'lishuuro';
+  --breakpoint-mdd: 54rem;
+
+  --color-main-50: #fefaec;
+  --color-main-100: #fcefc9;
+  --color-main-200: #f8de8f;
+  --color-main-300: #f5c754;
+  --color-main-400: #f3b12c;
+  --color-main-500: #ec9114;
+  --color-main-600: #db720f;
+  --color-main-700: #ad4c10;
+  --color-main-800: #8d3b13;
+  --color-main-900: #743113;
+  --color-main-950: #421806;
+
+  --color-sec-50: #fef2f2;
+  --color-sec-100: #fee2e2;
+  --color-sec-200: #ffc9c9;
+  --color-sec-300: #fda4a4;
+  --color-sec-400: #f95d5d;
+  --color-sec-500: #f14242;
+  --color-sec-600: #de2424;
+  --color-sec-700: #bb1a1a;
+  --color-sec-800: #9b1919;
+  --color-sec-900: #801c1c;
+  --color-sec-950: #460909;
+
+  /* --color-copper-rust-50: #fbf5f5; */
+  /* --color-copper-rust-100: #f7edec; */
+  /* --color-copper-rust-200: #efdcdc; */
+  /* --color-copper-rust-300: #e1c1c0; */
+  /* --color-copper-rust-400: #d09c9d; */
+  /* --color-copper-rust-500: #bb787a; */
+  /* --color-copper-rust-600: #a45a60; */
+  /* --color-copper-rust-700: #8c4a51; */
+  /* --color-copper-rust-800: #733e46; */
+  /* --color-copper-rust-900: #63383f; */
+  /* --color-copper-rust-950: #361b1f; */
+}
+
+body[data-page='home'],
+body[data-page='profile'],
+body[data-page='tv'],
+body[data-page='rules'],
+body[data-page='custom-pieces'] {
+  --main-max-width: 1400px !important;
+}
+
+body[data-page='game'] {
+  --main-max-width: auto;
+  --board-scale: calc((var(--zoom, 100) / 100) * 0.75 + 0.25);
+}
+
+body[data-page='game'] #main-wrap {
+  /* --empty-item-height: 0vh; */
+  /* --header-height: 0px; */
+  /* --clock-height: 0px; */
+  /* --placement-height: 0px; */
+  --main-max-width: calc(
+    100vh -
+      calc(
+        var(--header-height, 0px) + var(--clock-height, 0px) + 1.75rem +
+          var(--empty-item-height, 0px) + var(--placement-height, 0px)
+      )
+  );
+  /* --board-scale: 1; */
+}
+@media (min-width: 640px) and (orientation: landscape) {
+  #main-wrap {
+    --empty-item-height: 7vh;
+  }
+}
+
+@media (max-width: 799.29px) and (orientation: landscape) {
+  #main-wrap {
+    --main-content: calc(
+      100vh - calc(var(--header-height, 10px) + var(---site-header-margin, 8px) + 1.75rem) + 100px +
+        4em + var(--placement-height)
+    );
+    --empty-item-height: 7vh;
+  }
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  background: var(--color-main-300);
+  height: 0.5rem;
+}
+
+/******** Firefox ********/
+input[type='range']::-moz-range-track {
+  background: var(--color-main-300);
+  height: 0.5rem;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  /* Override default look */
+  appearance: none;
+  margin-top: -12px;
+  /* Centers thumb on the track */
+  background-color: var(--color-main-800);
+  height: 1.5rem;
+  width: 1.5rem;
+  border: 1px solid var(--color-main-100);
+  /*Removes extra border that FF applies*/
+  border-radius: 1em;
+  /*Removes default border-radius that FF applies*/
+}
+
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type='range']::-moz-range-thumb {
+  border: 1px solid var(--color-main-100);
+  /*Removes extra border that FF applies*/
+  border-radius: 1em;
+  /*Removes default border-radius that FF applies*/
+  background-color: var(--color-main-800);
+  height: 1.5rem;
+  width: 1.5rem;
+}
+
+#app ::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Scrollbar thumb (controller) */
+#app ::-webkit-scrollbar-thumb {
+  background: var(--color-main-300);
+  border-radius: 3px;
+}
+
+/* Scrollbar track (background) */
+#app ::-webkit-scrollbar-track {
+  background: var(--color-main-100);
+}
+
+@media (prefers-color-scheme: dark) {
+  #app ::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  /* Scrollbar thumb (controller) */
+  #app ::-webkit-scrollbar-thumb {
+    background: var(--color-main-600);
+    border-radius: 3px;
+  }
+
+  /* Scrollbar track (background) */
+  #app ::-webkit-scrollbar-track {
+    background: var(--color-main-950);
+  }
+
+  @supports (-moz-appearance: none) {
+    #app > * {
+      scrollbar-color: var(--color-main-200) var(--color-main-300);
+      scrollbar-width: thin;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    #app > * {
+      scrollbar-color: var(--color-main-700) var(--color-main-950);
+      scrollbar-width: thin;
+    }
+  }
+}
